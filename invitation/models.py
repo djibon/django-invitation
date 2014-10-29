@@ -178,46 +178,6 @@ class InvitationKey(models.Model):
         msg.send()
     
     def generate_token(self, invitation_url):
-        def stamp(image, text, offset):
-            f = ImageFont.load_default()
-            txt_img=Image.new('RGBA', f.getsize(text))
-            d = ImageDraw.Draw(txt_img)
-            d.text( (0, 0), text,  font=f, fill="#888")
-            exp_img_r = txt_img.rotate(0,  expand=1)
-            iw, ih = image.size
-            tw, th = txt_img.size
-            x = iw/2 - tw/2
-            y = ih/2 - th/2
-            image.paste( exp_img_r, (x,y+offset), exp_img_r)
-            return offset+th
-        
-        #normalize sataic url
-        r_parse = urlparse(get_root_url(), 'http')
-        s_parse = urlparse(settings.STATIC_URL, 'http')
-        s_parts = (s_parse.scheme, s_parse.netloc or r_parse.netloc, s_parse.path, s_parse.params, s_parse.query, s_parse.fragment)
-        static_url = urlunparse(s_parts)
-        
-        #open base token image
-        img_url = static_url+'notification/img/token-invite.png'
-        temp_img = NamedTemporaryFile()    
-        temp_img.write(urllib2.urlopen(img_url).read())
-        temp_img.flush()
-        image = Image.open(temp_img.name)
-
-        #stamp expiration date
-        expiration_date = self.date_invited + datetime.timedelta(days=settings.ACCOUNT_INVITATION_DAYS)
-        exp_text = expiration_date.strftime("%x")
-        stamp(image, exp_text, 18)
-
-        #stamp recipiant name
-        if self.recipient[1]:
-            offset = stamp(image, self.recipient[1], -16)
-        if self.recipient[2]:
-            offset = stamp(image, self.recipient[2], offset)
-        image.save(temp_img.name, "PNG", quality=95)
-        if not default_storage.exists('tokens/%s.png' % self.key):
-            default_storage.save('tokens/%s.png' % self.key, File(temp_img))
-        get_token_url = get_root_url()+reverse('invitation_token', kwargs={'key':self.key})
         token_html = '<a style="display: inline-block;" href="'+invitation_url+'">Click Me</a>'
         return token_html
         
