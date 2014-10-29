@@ -33,12 +33,15 @@ else:
     from registration.models import SHA1_RE
 
 # prevent error on initial syncdb for apps that incorporate django-invitaion
-try:
-    site = Site.objects.get_current()
-    root_url = 'http://%s' % site.domain
-except:
-    connection.close()
+#try:
+#    site = Site.objects.get_current()
+#    root_url = 'http://%s' % site.domain
+#except:
+#    connection.close()
 
+def get_root_url():
+    site = Site.objects.get_current()
+    return 'http://%s' % site.domain
     
 class InvitationKeyManager(models.Manager):
     def get_key(self, invitation_key):
@@ -143,14 +146,14 @@ class InvitationKey(models.Model):
         self.save()
     
     def get_context(self, sender_note=None):
-        invitation_url = root_url + reverse('invitation_invited', kwargs={'invitation_key':self.key})
+        invitation_url = get_root_url() + reverse('invitation_invited', kwargs={'invitation_key':self.key})
         exp_date = self.date_invited + datetime.timedelta(days=settings.ACCOUNT_INVITATION_DAYS)
         context = { 'invitation_key': self,
                     'expiration_days': settings.ACCOUNT_INVITATION_DAYS,
                     'from_user': self.from_user,
                     'sender_note': sender_note,
-                    'site': site,
-                    'root_url': root_url,
+                    'site': Site.objects.get_current().domain,
+                    'root_url': get_root_url(),
                     'expiration_date': exp_date,
                     'recipient': self.recipient,
                     'token': self.generate_token(invitation_url),
@@ -189,7 +192,7 @@ class InvitationKey(models.Model):
             return offset+th
         
         #normalize sataic url
-        r_parse = urlparse(root_url, 'http')
+        r_parse = urlparse(get_root_url(), 'http')
         s_parse = urlparse(settings.STATIC_URL, 'http')
         s_parts = (s_parse.scheme, s_parse.netloc or r_parse.netloc, s_parse.path, s_parse.params, s_parse.query, s_parse.fragment)
         static_url = urlunparse(s_parts)
@@ -214,7 +217,7 @@ class InvitationKey(models.Model):
         image.save(temp_img.name, "PNG", quality=95)
         if not default_storage.exists('tokens/%s.png' % self.key):
             default_storage.save('tokens/%s.png' % self.key, File(temp_img))
-        get_token_url = root_url+reverse('invitation_token', kwargs={'key':self.key})
+        get_token_url = get_root_url()+reverse('invitation_token', kwargs={'key':self.key})
         token_html = '<a style="display: inline-block;" href="'+invitation_url+'"><img width="100" height="100" class="token" src="'+get_token_url+'" alt="invitation token"></a>'
         return token_html
         
