@@ -218,7 +218,7 @@ class InvitationKey(models.Model):
         if not default_storage.exists('tokens/%s.png' % self.key):
             default_storage.save('tokens/%s.png' % self.key, File(temp_img))
         get_token_url = get_root_url()+reverse('invitation_token', kwargs={'key':self.key})
-        token_html = '<a style="display: inline-block;" href="'+invitation_url+'"><img width="100" height="100" class="token" src="'+get_token_url+'" alt="invitation token"></a>'
+        token_html = '<a style="display: inline-block;" href="'+invitation_url+'">Click Me</a>'
         return token_html
         
 class InvitationUser(models.Model):
